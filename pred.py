@@ -15,5 +15,7 @@ csv_list = os.listdir(csv_dir)
 coordinates = {}
 for csv_file in csv_list:
     image_num = csv_file.split('.')[0]
-    df = pd.read_csv(os.path.join(csv_dir, csv_file))
+    df = pd.read_csv(os.path.join(csv_dir, csv_file), header=None)
     coordinates[image_num] = df.values
+
+
