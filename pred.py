@@ -12,3 +12,5 @@ print(pred)
 
 #
 # %%
+print(pred)
+# %%

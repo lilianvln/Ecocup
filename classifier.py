@@ -134,11 +134,11 @@ class Classifier:
         # Step 1: Load dataset and contour coordinates
         image_dir_test = 'test/'
         image_test = os.listdir(image_dir_test)
-        pred=np.array([])
+        predict=[]
         for i in range(len(image_test)):
             img = image_test[i]
             img=cv2.imread(image_dir_test+img)
-            detections=np.array([])
+            detections=np.empty((0, 6))
             scale_factor = 1.0
             while scale_factor>0.1 and img.shape[0] > self.window_size[0] and img.shape[1] > self.window_size[1]:
                 for y in range(0, img.shape[0] - self.window_size[0], self.stride):
@@ -153,14 +153,19 @@ class Classifier:
                                         # Ajouter les descripteurs HOG à la liste des exemples négatifs
                         pred = self.clf.predict_proba(hog_features.reshape(1,-1))[0][1]
                         if pred > self.threshold:
+                            new_row = np.array([i, y/scale_factor, x/scale_factor, self.window_size[0]/scale_factor, self.window_size[1]/scale_factor, pred])
+                            new_row = new_row.reshape(1, 6)
+                            print("new")
+                            print(new_row)
+                            detections = np.append(detections, new_row,axis =0)
 
-                            detections=np.append(detections,[i,y/scale_factor, x/scale_factor, self.window_size[0]/scale_factor,self.window_size[1]/scale_factor,pred])
                 # Réduire la taille de l'image pour le prochain passage de la fenêtre glissante
                 scale_factor *= 0.8
                 img = resize(img, (int(img.shape[0] * scale_factor), int(img.shape[1] * scale_factor)))
-                pred=np.append(pred,detections)
-                ###if detections.size != 0:
-                    ##print("test")
-                   ## print(detections)
-                    ##pred =np.append(pred, self.filtre_nms(detections))
-        return pred
+            if detections.shape[0] > 1:
+                print("test")
+                print(detections)
+                predict.append(self.filtre_nms(detections))
+            elif detections.shape[0] == 1 :
+                predict.append(detections)
+        return predict
