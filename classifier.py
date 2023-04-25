@@ -134,11 +134,11 @@ class Classifier:
         # Step 1: Load dataset and contour coordinates
         image_dir_test = 'test/'
         image_test = os.listdir(image_dir_test)
-        pred=[]
+        pred=np.array([])
         for i in range(len(image_test)):
             img = image_test[i]
             img=cv2.imread(image_dir_test+img)
-            detections=[]
+            detections=np.array([])
             scale_factor = 1.0
             while scale_factor>0.1 and img.shape[0] > self.window_size[0] and img.shape[1] > self.window_size[1]:
                 for y in range(0, img.shape[0] - self.window_size[0], self.stride):
@@ -151,11 +151,16 @@ class Classifier:
                         hog_features = hog(rgb2gray(resized_window), orientations=9, pixels_per_cell=(8, 8),
                                         cells_per_block=(3, 3), block_norm='L2-Hys', feature_vector=True)
                                         # Ajouter les descripteurs HOG à la liste des exemples négatifs
-                        pred = self.clf.predict_proba(hog_features)[0][1]
+                        pred = self.clf.predict_proba(hog_features.reshape(1,-1))[0][1]
                         if pred > self.threshold:
-                            detections.append((i,y/scale_factor, x/scale_factor, self.window_size[0]/scale_factor,self.window_size[1]/scale_factor,pred))
+
+                            detections=np.append(detections,[i,y/scale_factor, x/scale_factor, self.window_size[0]/scale_factor,self.window_size[1]/scale_factor,pred])
                 # Réduire la taille de l'image pour le prochain passage de la fenêtre glissante
                 scale_factor *= 0.8
                 img = resize(img, (int(img.shape[0] * scale_factor), int(img.shape[1] * scale_factor)))
-            pred.append(self.filtre_nms(detections))
+                pred=np.append(pred,detections)
+                ###if detections.size != 0:
+                    ##print("test")
+                   ## print(detections)
+                    ##pred =np.append(pred, self.filtre_nms(detections))
         return pred
