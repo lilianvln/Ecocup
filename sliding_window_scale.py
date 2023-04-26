@@ -33,3 +33,5 @@ def sliding_window_scale(image_path, window_size, stride, num_scales):
                 if score > 0.95:
                     cv2.imshow("Window", window)
                     cv2.waitKey(0)
+
+sliding_window_scale('000-2 copy.jpeg', (100,200), 100, 5)
