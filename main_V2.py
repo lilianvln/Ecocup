@@ -152,7 +152,7 @@ class Classifier:
                             # Ajouter les descripteurs HOG à la liste des exemples négatifs
                             pred = self.clf.predict_proba(hog_features.reshape(1, -1))[0][1]
                             if pred > self.threshold:
-                                new_row = np.array([i, y / scale_factor, x / scale_factor, self.window_size[0] / scale_factor, self.window_size[1] / scale_factor, pred])
+                                new_row = np.array([i, x / scale_factor,y / scale_factor, self.window_size[1] / scale_factor, self.window_size[0] / scale_factor, pred])
                                 new_row = new_row.reshape(1, 6)
                                 detections = np.append(detections, new_row, axis=0)
                     # Réduire la taille de l'image pour le prochain passage de la fenêtre glissante

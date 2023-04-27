@@ -1,6 +1,5 @@
 import os
 import pickle
-from sklearn.linear_model import LogisticRegression
 import cv2
 import numpy as np
 from skimage.transform import resize
@@ -10,21 +9,13 @@ from skimage.color import rgb2gray
 
 class Classifier:
 
-    def __init__(self, window_size=(30, 30), stride=100, threshold=0.5):
-        # Initialiser le classificateur
-        self.clf = LogisticRegression(max_iter=1000)
+    def __init__(self, model , window_size=(30, 30), stride=100, threshold=0.5):
         # Définir les tailles de fenêtres glissantes
         self.window_size = window_size
         # Définir le pas de la fenêtre
         self.stride = stride
         self.threshold = threshold
-        self.model
-
-    def loadModel():
-        # Charger le modèle depuis le fichier "model.p"
-        with open('model.p', 'rb') as f:
-            model = pickle.load(f)
-        return model
+        self.model =model
 
     def iou(self, i1, j1, h1, l1, i2, j2, h2, l2):
         x_inter1 = max(j1, j2)
@@ -102,12 +93,13 @@ class Classifier:
                             # Redimensionner la région pour qu'elle ait la taille de la fenêtre glissante
                             resized_window = resize(window, self.window_size)
                             # Extraire les descripteurs HOG de la région
-                            hog_features =[]
-                            hog_features.append(hog(rgb2gray(resized_window), orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3), channel_axis=-1))   # extract HOG features
+                            hog_features=[]
+                            hog_features.append(hog(rgb2gray(resized_window), orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3)))   # extract HOG features
                             # Ajouter les descripteurs HOG à la liste des exemples négatifs
-                            pred = self.loadModel().predict_proba(hog_features)
-                            if pred > self.threshold:
-                                new_row = np.array([i, y / scale_factor, x / scale_factor, self.window_size[0] / scale_factor, self.window_size[1] / scale_factor,  pred])
+                            pred = self.model.predict_proba(hog_features)
+                            score=pred[:, 1][0]
+                            if score > self.threshold:
+                                new_row = np.array([i, y / scale_factor, x / scale_factor, self.window_size[0] / scale_factor, self.window_size[1] / scale_factor,  score])
                                 new_row = new_row.reshape(1, 6)
                                 detections = np.append(detections, new_row, axis=0)
                     # Réduire la taille de l'image pour le prochain passage de la fenêtre glissante
@@ -118,4 +110,19 @@ class Classifier:
                 elif detections.shape[0] == 1:
                     predict.append(detections)
         return predict
-    
+
+with open('model.p', 'rb') as f:
+        model = pickle.load(f)
+classifier = Classifier(model= model , stride=20, threshold=0.5)
+predict = classifier.predict()
+
+for i in predict:
+    if i != []:
+        print(i[0])
+        numero_image = int(i[0][0])
+        coordonnee_ligne = int(i[0][1])
+        coordonne_colonne = int(i[0][2])
+        hauteur = int(i[0][3])
+        largeur = int(i[0][4])
+        score = i[0][5]
+        classifier.ajouter_cadre(numero_image, coordonnee_ligne, coordonne_colonne, hauteur, largeur, score)
